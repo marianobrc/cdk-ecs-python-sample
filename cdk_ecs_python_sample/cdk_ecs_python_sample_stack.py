@@ -21,7 +21,11 @@ class SampleAppStack(cdk.Stack):
         # The code that defines your stack goes here
 
         # The repository where images of this app will be stored
-        self.ecr_repo = ecr.Repository(self, 'cdk-ecs-sample-ecr-repo')
+        self.ecr_repo = ecr.Repository(
+            self,
+            'cdk-ecs-sample-ecr-repo',
+            repository_name="cdk-ecs-sample-ecr-repo"  # Important: keep teh name lowercase
+        )
 
         # Our network in the cloud
         self.vpc = ec2.Vpc(
