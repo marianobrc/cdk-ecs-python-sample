@@ -9,11 +9,15 @@ from aws_cdk import core as cdk
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
 
-from cdk_ecs_python_sample.cdk_ecs_python_sample_stack import CdkEcsPythonSampleStack
+from pipeline_stack import SampleAppPipelineStack
+from cdk_ecs_python_sample.cdk_ecs_python_sample_stack import SampleAppStack
 
 
 app = core.App()
-CdkEcsPythonSampleStack(app, "CdkEcsPythonSampleStack",
+backend = SampleAppStack(
+    app,
+    "SampleAppStack",
+    env=core.Environment(account="675985711616", region="us-east-1")
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
@@ -29,6 +33,11 @@ CdkEcsPythonSampleStack(app, "CdkEcsPythonSampleStack",
     #env=core.Environment(account='123456789012', region='us-east-1'),
 
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
-    )
-
+)
+SampleAppPipelineStack(
+    app,
+    "SampleAppPipelineStack",
+    env=core.Environment(account="675985711616", region="us-east-1"),
+    backend=backend
+)
 app.synth()

@@ -50,6 +50,7 @@ aws-cdk.cloud-assembly-schema==1.109.0
 aws-cdk.core==1.109.0
 aws-cdk.custom-resources==1.109.0
 aws-cdk.cx-api==1.109.0
+aws-cdk.pipelines==1.109.0
 aws-cdk.region-info==1.109.0
 cattrs==1.5.0
 constructs==3.3.83
