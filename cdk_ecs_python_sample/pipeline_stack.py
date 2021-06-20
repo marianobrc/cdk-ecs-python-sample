@@ -46,6 +46,7 @@ class SampleAppPipelineStack(Stack):
 
         # Add a build stage to build docker images and store them in ECR
         build_output = codepipeline.Artifact()
+        docker_img_name = backend.ecr_repo.repository_name
         build_spec = codebuild.BuildSpec.from_object(
             {
                 "version": '0.2',
@@ -60,15 +61,15 @@ class SampleAppPipelineStack(Stack):
                     },
                     "build": {
                         "commands": [
-                            'docker build -t $REPOSITORY_URI:latest .',
-                            'docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG',
+                            f'docker build -t {docker_img_name}:latest .',
+                            f'docker tag {docker_img_name}:latest {docker_img_name}:$IMAGE_TAG',
                         ]
                     },
                     "post_build": {
                         "commands": [
-                            'docker push $REPOSITORY_URI:latest',
-                            'docker push $REPOSITORY_URI:$IMAGE_TAG',
-                            'printf "[{\\"name\\":\\"${CONTAINER_NAME}\\",\\"imageUri\\":\\"${REPOSITORY_URI}:latest\\"}]" > imagedefinitions.json'
+                            f'docker push {docker_img_name}:latest',
+                            f'docker push {docker_img_name}:$IMAGE_TAG',
+                            'printf "[{\\"name\\":\\"${CONTAINER_NAME}\\",\\"imageUri\\":\\"'+docker_img_name+':latest\\"}]" > imagedefinitions.json'
                         ]
                     }
                 },
