@@ -26,7 +26,6 @@ class SampleAppStack(cdk.Stack):
             'cdk-ecs-sample-ecr-repo',
             repository_name="cdk-ecs-sample-ecr-repo"  # Important: keep teh name lowercase
         )
-
         # Our network in the cloud
         self.vpc = ec2.Vpc(
             self,
