@@ -61,7 +61,7 @@ class SampleAppPipelineStack(Stack):
                     },
                     "build": {
                         "commands": [
-                            f'docker build -t {docker_img_name}:latest .',
+                            f'docker build -t {docker_img_name}:latest ./backend/',
                             f'docker tag {docker_img_name}:latest {docker_img_name}:$IMAGE_TAG',
                         ]
                     },
