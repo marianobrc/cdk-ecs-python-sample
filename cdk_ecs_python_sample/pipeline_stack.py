@@ -51,7 +51,7 @@ class SampleAppPipelineStack(Stack):
                 "phases": {
                     "install": {
                         "runtime-versions": {
-                            "python": "3.x"
+                            "python": "3.8"
                         },
                         "commands": [
                             "echo 'Installing dependencies..'",
@@ -72,7 +72,7 @@ class SampleAppPipelineStack(Stack):
             "SampleAppTestsCodeBuildProject",
             build_spec=automatic_tests_spec,
             environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.STANDARD_2_0,
+                build_image=codebuild.LinuxBuildImage.STANDARD_3_0,
                 privileged=True
             )
         )
