@@ -44,6 +44,46 @@ class SampleAppPipelineStack(Stack):
 
         )
 
+        # Add a stage to run automatic tests before deploying
+        automatic_tests_spec = codebuild.BuildSpec.from_object(
+            {
+                "version": '0.2',
+                "phases": {
+                    "install": {
+                        "runtime-versions": "python38",
+                        "commands": [
+                            "echo 'Installing dependencies..'",
+                            "pip3 install -r ./backend/requirements.txt"
+                        ]
+                    },
+                    "build": {
+                        "commands": [
+                            "echo 'Running tests..'",
+                            "python3 ./backend/tests.py"
+                        ]
+                    },
+                }
+            }
+        )
+        automatic_tests_project = codebuild.Project(
+            self,
+            "SampleAppTestsCodeBuildProject",
+            build_spec=automatic_tests_spec,
+            environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.STANDARD_2_0,
+            )
+        )
+        pipeline.add_stage(
+            stage_name="AutomaticTests",
+            actions=[
+                codepipeline_actions.CodeBuildAction(
+                    action_name="TESTS_ACTION",
+                    input=source_output,  # Takes the source code from a previous stage
+                    project=automatic_tests_project
+                )
+            ]
+        )
+
         # Add a build stage to build docker images and store them in ECR
         build_output = codepipeline.Artifact()
         build_spec = codebuild.BuildSpec.from_object(
@@ -98,8 +138,8 @@ class SampleAppPipelineStack(Stack):
             stage_name="Build",
             actions=[
                 codepipeline_actions.CodeBuildAction(
-                    action_name="CODEBUILD_ACTION",
-                    input=source_output,  # Takes the source code from the previous stage
+                    action_name="BUILD_ACTION",
+                    input=source_output,  # Takes the source code from a previous stage
                     outputs=[build_output],
                     project=codebuild_project
                 )
