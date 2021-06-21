@@ -50,7 +50,9 @@ class SampleAppPipelineStack(Stack):
                 "version": '0.2',
                 "phases": {
                     "install": {
-                        "runtime-versions": "python38",
+                        "runtime-versions": {
+                            "python": "3.8"
+                        },
                         "commands": [
                             "echo 'Installing dependencies..'",
                             "pip3 install -r ./backend/requirements.txt"
