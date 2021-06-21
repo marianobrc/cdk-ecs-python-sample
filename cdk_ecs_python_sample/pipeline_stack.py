@@ -73,6 +73,7 @@ class SampleAppPipelineStack(Stack):
             build_spec=automatic_tests_spec,
             environment=codebuild.BuildEnvironment(
                 build_image=codebuild.LinuxBuildImage.STANDARD_2_0,
+                privileged=True
             )
         )
         pipeline.add_stage(
