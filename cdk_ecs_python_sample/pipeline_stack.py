@@ -51,7 +51,7 @@ class SampleAppPipelineStack(Stack):
                 "phases": {
                     "install": {
                         "runtime-versions": {
-                            "python": 3.8
+                            "python": "3.8"
                         },
                         "commands": [
                             "echo 'Installing dependencies..'",
