@@ -9,13 +9,15 @@ class SampleAppPipelineStack(Stack):
 
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         backend = kwargs.pop("backend")
+        source_branch = kwargs.pop("source_branch", "master")
+        deploy_env = kwargs.pop("deploy_env")
         super().__init__(scope, id, **kwargs)
 
         # Create an empty Pipeline
         pipeline = codepipeline.Pipeline(
             self,
-            "SampleAppCPipelineProd",
-            pipeline_name="SampleAppCPipelineProd"
+            f"SampleAppCPipeline{deploy_env}",
+            pipeline_name=f"SampleAppCPipeline{deploy_env}"
         )
 
         # Add a source stage to trigger the pipeline on github commits
@@ -25,6 +27,7 @@ class SampleAppPipelineStack(Stack):
             actions=[
                 codepipeline_actions.GitHubSourceAction(
                     action_name="GITHUB_SOURCE_ACTION",
+                    branch=source_branch,
                     output=source_output,
                     oauth_token=SecretValue.secrets_manager(
                         secret_id="/cdk-ecs-sample/prod/github",
@@ -37,8 +40,7 @@ class SampleAppPipelineStack(Stack):
                     repo=SecretValue.secrets_manager(
                         secret_id="/cdk-ecs-sample/prod/github",
                         json_field="GITHUB_REPO"
-                    ).to_string(),
-                    branch="master"
+                    ).to_string()
                 )
             ]
 

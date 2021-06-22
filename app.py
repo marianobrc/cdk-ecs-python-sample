@@ -14,10 +14,13 @@ from cdk_ecs_python_sample.cdk_ecs_python_sample_stack import SampleAppStack
 
 
 app = core.App()
-backend = SampleAppStack(
+# Create staging resources
+stage_backend = SampleAppStack(
     app,
-    "SampleAppStack",
-    env=core.Environment(account="675985711616", region="us-east-1")
+    "SampleAppStackStage",
+    task_cpu=256,
+    task_desired_count=1,  # Keep it small in staging to save costs
+    task_memory_mib=512,
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
@@ -25,7 +28,7 @@ backend = SampleAppStack(
     # Uncomment the next line to specialize this stack for the AWS Account
     # and Region that are implied by the current CLI configuration.
 
-    #env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+    env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
 
     # Uncomment the next line if you know exactly what Account and Region you
     # want to deploy the stack to. */
@@ -36,8 +39,29 @@ backend = SampleAppStack(
 )
 SampleAppPipelineStack(
     app,
-    "SampleAppPipelineStack",
-    env=core.Environment(account="675985711616", region="us-east-1"),
-    backend=backend
+    "SampleAppPipelineStackStage",
+    env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+    backend=stage_backend,
+    source_branch="development",
+    deploy_env="Stage"
+)
+
+# Create Production resources
+prod_backend = SampleAppStack(
+    app,
+    "SampleAppStackProd",
+    task_cpu=512,
+    task_desired_count=2,  # 2 tasks in 2 AZ minimum for High Availability
+    task_memory_mib=1024,
+    env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+)
+SampleAppPipelineStack(
+    app,
+    "SampleAppPipelineStackProd",
+    env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+    backend=prod_backend,
+    source_branch="master",
+    deploy_env="Prod",
+
 )
 app.synth()

@@ -16,6 +16,9 @@ from aws_cdk.aws_iam import ServicePrincipal
 class SampleAppStack(cdk.Stack):
 
     def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+        task_cpu = kwargs.pop("task_cpu", 256)
+        task_desired_count = kwargs.pop("task_desired_count", 2)
+        task_memory_mib = kwargs.pop("task_memory_mib", 1024)
         super().__init__(scope, construct_id, **kwargs)
 
         # The code that defines your stack goes here
@@ -66,14 +69,8 @@ class SampleAppStack(cdk.Stack):
             open=True,
             private_dns_enabled=True
         )
-
         cluster = ecs.Cluster(self, "SampleAppCluster", vpc=self.vpc)
-        # Allow ECS tasks to pull images from ECR while provisioning
-        # ecs_task_execution_role = iam.Role(
-        #     self, "SampleAppEcsTaskExecutionRole",
-        #     assumed_by=ServicePrincipal('ecs-tasks.amazonaws.com'),
-        #     managed_policies=[iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonECSTaskExecutionRolePolicy")]
-        # )
+
         # Create the load balancer, ECS service and tasks
         self.container_name = "ecs-sample-app"
         self.alb_fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
@@ -82,23 +79,13 @@ class SampleAppStack(cdk.Stack):
             #certificate=aws_route53.IHostedZone,
             platform_version=ecs.FargatePlatformVersion.VERSION1_4,
             cluster=cluster,  # Required
-            cpu=256,  # Default is 256
-            desired_count=1,  # Default is 1
+            cpu=task_cpu,  # Default is 256
+            memory_limit_mib=task_memory_mib,  # Default is 512
+            desired_count=task_desired_count,  # Default is 1
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=ecs.ContainerImage.from_asset("./backend/"),
-                # image=ecs.ContainerImage.from_ecr_repository(
-                #     repository=ecr.Repository.from_repository_arn(
-                #         self,
-                #         "SampleAppECRSourceRepo",
-                #         repository_arn="arn:aws:ecr:us-east-1:675985711616:repository/ecs-python-sample"
-                #     ),
-                #     tag="latest"
-                # ),
                 container_port=5000,
                 container_name=self.container_name
-                #execution_role=ecs_task_execution_role,
-                #task_role=ecs_task_execution_role
             ),
-            memory_limit_mib=512,  # Default is 512
             public_load_balancer=True
         )
