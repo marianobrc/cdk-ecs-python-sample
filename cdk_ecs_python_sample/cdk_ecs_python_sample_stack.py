@@ -5,70 +5,25 @@ from aws_cdk import core as cdk, aws_route53
 # with examples from the CDK Developer's Guide, which are in the process of
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
-from aws_cdk import (core, aws_ec2 as ec2, aws_ecs as ecs, aws_iam as iam, aws_ecr as ecr,
-                     aws_ecs_patterns as ecs_patterns)
-from aws_cdk.aws_ec2 import (GatewayVpcEndpoint, GatewayVpcEndpointAwsService,
-                             InterfaceVpcEndpointAwsService, GatewayVpcEndpointProps, InterfaceVpcEndpoint,
-                             InterfaceVpcEndpointProps)
-from aws_cdk.aws_iam import ServicePrincipal
+from aws_cdk import (core, aws_ecs as ecs, aws_ecs_patterns as ecs_patterns)
 
 
 class SampleAppStack(cdk.Stack):
 
     def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+        vpc = kwargs.pop("vpc")
         deploy_env = kwargs.pop("deploy_env", "prod")
         task_cpu = kwargs.pop("task_cpu", 256)
         task_desired_count = kwargs.pop("task_desired_count", 2)
         task_memory_mib = kwargs.pop("task_memory_mib", 1024)
-        self.ecr_repo = kwargs.pop("ecr_repo")  # The ECR repository is created in a separate stack
         super().__init__(scope, construct_id, **kwargs)
 
-        # Our network in the cloud
-        self.vpc = ec2.Vpc(
-            self,
-            "SampleAppVpc",
-            max_azs=2,  # default is all AZs in region
-            nat_gateways=0,  # Save costs and gain in performance and security
-            enable_dns_hostnames=True,
-            enable_dns_support=True
-        )
-        # Add VPC endpoints for ECR, S3 and CloudWatch to avoid using NAT GWs
-        self.s3_private_link = GatewayVpcEndpoint(
-            self,
-            "SampleAppS3GWEndpoint",
-            vpc=self.vpc,
-            service=GatewayVpcEndpointAwsService.S3
-        )
-        self.ecr_api_private_link = InterfaceVpcEndpoint(
-            self,
-            "SampleAppECRapiEndpoint",
-            vpc=self.vpc,
-            service=InterfaceVpcEndpointAwsService.ECR,
-            open=True,
-            private_dns_enabled=True
-        )
-        self.ecr_dkr_private_link = InterfaceVpcEndpoint(
-            self,
-            "SampleAppECRdkrEndpoint",
-            vpc=self.vpc,
-            service=InterfaceVpcEndpointAwsService.ECR_DOCKER,
-            open=True,
-            private_dns_enabled=True
-        )
-        cloudwatch_private_link = InterfaceVpcEndpoint(
-            self,
-            "SampleAppCloudWatchEndpoint",
-            vpc=self.vpc,
-            service=InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
-            open=True,
-            private_dns_enabled=True
-        )
-        cluster = ecs.Cluster(self, "SampleAppCluster", vpc=self.vpc)
+        cluster = ecs.Cluster(self, f"SampleAppCluster{deploy_env}", vpc=vpc)
 
         # Create the load balancer, ECS service and tasks
         self.container_name = "ecs-sample-app"
         self.alb_fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
-            self, "SampleAppBackendAPIService",
+            self, f"SampleAppBackendAPI{deploy_env}",
             #domain_name="api.quick-pay.com",
             #certificate=aws_route53.IHostedZone,
             platform_version=ecs.FargatePlatformVersion.VERSION1_4,

@@ -11,6 +11,7 @@ class SampleAppPipelineStack(Stack):
         backend = kwargs.pop("backend")
         source_branch = kwargs.pop("source_branch", "master")
         deploy_env = kwargs.pop("deploy_env")
+        ecr_repo = kwargs.pop("ecr_repo")
         super().__init__(scope, id, **kwargs)
 
         # Create an empty Pipeline
@@ -133,12 +134,12 @@ class SampleAppPipelineStack(Stack):
                 privileged=True
             ),
             environment_variables={
-                "REPOSITORY_URI": codebuild.BuildEnvironmentVariable(value=backend.ecr_repo.repository_uri_for_tag()),
+                "REPOSITORY_URI": codebuild.BuildEnvironmentVariable(value=ecr_repo.repository_uri_for_tag()),
                 "CONTAINER_NAME": codebuild.BuildEnvironmentVariable(value=backend.container_name)
             }
         )
         # Grant permissions to codebuild to access the ECR repo
-        backend.ecr_repo.grant_pull_push(codebuild_project.grant_principal)
+        ecr_repo.grant_pull_push(codebuild_project.grant_principal)
         pipeline.add_stage(
             stage_name="Build",
             actions=[
@@ -153,7 +154,7 @@ class SampleAppPipelineStack(Stack):
 
         # Add a Deploy stage to update ECS service & tasks with the new docker images
         ecs_service = backend.alb_fargate_service.service
-        backend.ecr_repo.grant_pull(ecs_service.task_definition.execution_role)
+        ecr_repo.grant_pull(ecs_service.task_definition.execution_role)
         pipeline.add_stage(
             stage_name="Deploy",
             actions=[

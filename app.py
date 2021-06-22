@@ -25,7 +25,7 @@ common_resources_stage = CommonResourcesStack(
 stage_backend = SampleAppStack(
     app,
     "SampleAppStackStage",
-    ecr_repo=common_resources_stage.ecr_repo,
+    vpc=common_resources_stage.vpc,
     task_cpu=256,
     task_desired_count=1,  # Keep it small in staging to save costs
     task_memory_mib=512,
@@ -37,6 +37,7 @@ SampleAppPipelineStack(
     "SampleAppPipelineStackStage",
     env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
     backend=stage_backend,
+    ecr_repo=common_resources_stage.ecr_repo,
     source_branch="development",
     deploy_env="Stage"
 )
@@ -51,7 +52,7 @@ common_resources_prod = CommonResourcesStack(
 prod_backend = SampleAppStack(
     app,
     "SampleAppStackProd",
-    ecr_repo=common_resources_prod.ecr_repo,
+    vpc=common_resources_prod.vpc,
     task_cpu=512,
     task_desired_count=2,  # 2 tasks in 2 AZ minimum for High Availability
     task_memory_mib=1024,
@@ -63,6 +64,7 @@ SampleAppPipelineStack(
     "SampleAppPipelineStackProd",
     env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
     backend=prod_backend,
+    ecr_repo=common_resources_prod.ecr_repo,
     source_branch="master",
     deploy_env="Prod",
 
