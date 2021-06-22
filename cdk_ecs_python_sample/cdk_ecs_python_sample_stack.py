@@ -16,19 +16,13 @@ from aws_cdk.aws_iam import ServicePrincipal
 class SampleAppStack(cdk.Stack):
 
     def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+        deploy_env = kwargs.pop("deploy_env", "prod")
         task_cpu = kwargs.pop("task_cpu", 256)
         task_desired_count = kwargs.pop("task_desired_count", 2)
         task_memory_mib = kwargs.pop("task_memory_mib", 1024)
+        self.ecr_repo = kwargs.pop("ecr_repo")  # The ECR repository is created in a separate stack
         super().__init__(scope, construct_id, **kwargs)
 
-        # The code that defines your stack goes here
-
-        # The repository where images of this app will be stored
-        self.ecr_repo = ecr.Repository(
-            self,
-            'cdk-ecs-sample-ecr-repo',
-            repository_name="cdk-ecs-sample-ecr-repo"  # Important: keep teh name lowercase
-        )
         # Our network in the cloud
         self.vpc = ec2.Vpc(
             self,

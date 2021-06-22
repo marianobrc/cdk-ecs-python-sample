@@ -9,32 +9,27 @@ from aws_cdk import core as cdk
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
 
+from common_resources_stack import CommonResourcesStack
 from pipeline_stack import SampleAppPipelineStack
 from cdk_ecs_python_sample.cdk_ecs_python_sample_stack import SampleAppStack
 
 
 app = core.App()
 # Create staging resources
+common_resources_stage = CommonResourcesStack(
+    app,
+    "CommonResourcesStackStage",
+    deploy_env="Stage",
+    env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+)
 stage_backend = SampleAppStack(
     app,
     "SampleAppStackStage",
+    ecr_repo=common_resources_stage.ecr_repo,
     task_cpu=256,
     task_desired_count=1,  # Keep it small in staging to save costs
     task_memory_mib=512,
-    # If you don't specify 'env', this stack will be environment-agnostic.
-    # Account/Region-dependent features and context lookups will not work,
-    # but a single synthesized template can be deployed anywhere.
-
-    # Uncomment the next line to specialize this stack for the AWS Account
-    # and Region that are implied by the current CLI configuration.
-
     env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
-
-    # Uncomment the next line if you know exactly what Account and Region you
-    # want to deploy the stack to. */
-
-    #env=core.Environment(account='123456789012', region='us-east-1'),
-
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
 )
 SampleAppPipelineStack(
@@ -47,12 +42,20 @@ SampleAppPipelineStack(
 )
 
 # Create Production resources
+common_resources_prod = CommonResourcesStack(
+    app,
+    "CommonResourcesStackProd",
+    deploy_env="Prod",
+    env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+)
 prod_backend = SampleAppStack(
     app,
     "SampleAppStackProd",
+    ecr_repo=common_resources_prod.ecr_repo,
     task_cpu=512,
     task_desired_count=2,  # 2 tasks in 2 AZ minimum for High Availability
     task_memory_mib=1024,
+    deploy_env="Prod",
     env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
 )
 SampleAppPipelineStack(
