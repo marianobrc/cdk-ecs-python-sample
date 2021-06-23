@@ -1,5 +1,4 @@
-from aws_cdk.core import Stack, StackProps, Construct, SecretValue
-from aws_cdk.pipelines import CdkPipeline, SimpleSynthAction
+from aws_cdk.core import Stack, Construct, SecretValue
 import aws_cdk.aws_codepipeline as codepipeline
 import aws_cdk.aws_codebuild as codebuild
 import aws_cdk.aws_codepipeline_actions as codepipeline_actions
@@ -9,6 +8,7 @@ class SampleAppPipelineStack(Stack):
 
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         backend = kwargs.pop("backend")
+        github_connection = kwargs.pop("github_connection")
         source_branch = kwargs.pop("source_branch", "master")
         deploy_env = kwargs.pop("deploy_env")
         ecr_repo = kwargs.pop("ecr_repo")
@@ -26,14 +26,29 @@ class SampleAppPipelineStack(Stack):
         pipeline.add_stage(
             stage_name="Source",
             actions=[
-                codepipeline_actions.GitHubSourceAction(
+                # Old style GH 1.0 with OAuth token
+                # codepipeline_actions.GitHubSourceAction(
+                #     action_name="GITHUB_SOURCE_ACTION",
+                #     branch=source_branch,
+                #     output=source_output,
+                #     oauth_token=SecretValue.secrets_manager(
+                #         secret_id="/cdk-ecs-sample/prod/github",
+                #         json_field="GITHUB_TOKEN"
+                #     ),
+                #     owner=SecretValue.secrets_manager(
+                #         secret_id="/cdk-ecs-sample/prod/github",
+                #         json_field="GITHUB_OWNER"
+                #     ).to_string(),
+                #     repo=SecretValue.secrets_manager(
+                #         secret_id="/cdk-ecs-sample/prod/github",
+                #         json_field="GITHUB_REPO"
+                #     ).to_string()
+                # )
+                codepipeline_actions.CodeStarConnectionsSourceAction(
                     action_name="GITHUB_SOURCE_ACTION",
                     branch=source_branch,
                     output=source_output,
-                    oauth_token=SecretValue.secrets_manager(
-                        secret_id="/cdk-ecs-sample/prod/github",
-                        json_field="GITHUB_TOKEN"
-                    ),
+                    connection_arn=github_connection.attr_connection_arn,
                     owner=SecretValue.secrets_manager(
                         secret_id="/cdk-ecs-sample/prod/github",
                         json_field="GITHUB_OWNER"
