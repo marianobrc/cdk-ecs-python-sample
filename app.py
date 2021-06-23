@@ -10,11 +10,19 @@ from aws_cdk import core as cdk
 from aws_cdk import core
 
 from common_resources_stack import CommonResourcesStack
+from github_connection_stack import GitHubConnectionStack
 from pipeline_stack import SampleAppPipelineStack
 from cdk_ecs_python_sample.cdk_ecs_python_sample_stack import SampleAppStack
 
 
 app = core.App()
+# Common resources
+github_connection = GitHubConnectionStack(
+    app,
+    "GitHubConnectionStack",
+    deploy_env="Common",
+    env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+)
 # Create staging resources
 common_resources_stage = CommonResourcesStack(
     app,
@@ -38,6 +46,7 @@ SampleAppPipelineStack(
     env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
     backend=stage_backend,
     ecr_repo=common_resources_stage.ecr_repo,
+    github_connection=github_connection.connection,
     source_branch="development",
     deploy_env="Stage"
 )
@@ -65,6 +74,7 @@ SampleAppPipelineStack(
     env=core.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
     backend=prod_backend,
     ecr_repo=common_resources_prod.ecr_repo,
+    github_connection=github_connection.connection,
     source_branch="master",
     deploy_env="Prod",
 
